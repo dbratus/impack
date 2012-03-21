@@ -1,12 +1,12 @@
 package main
 
 import (
+	"impack"
 	"fmt"
 )
 
 func main() {
-	a := 1
-	b := 2
-
-	fmt.Println(a, b)
+	avgFillRate := impack.Stats(1, 100, 30)
+	
+	fmt.Printf("Avg. fill rate: %f\n", avgFillRate)
 }

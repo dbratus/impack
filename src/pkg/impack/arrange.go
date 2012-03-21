@@ -18,44 +18,62 @@ func makePlacements(pivot, r image.Rectangle, out []image.Rectangle) {
 	out[7] = image.Rect(pivot.Max.X-r.Dx(), pivot.Min.Y-r.Dy(), pivot.Max.X, pivot.Min.Y)
 }
 
-//Packes the specified image rectangles into a minimal area. Returns the list of 
-//rectangles within the area.
-func Pack(rects []image.Rectangle) (packed RectSlice) {
-	packed = make([]image.Rectangle, 0, len(rects))
-
+//Given a set of rectangles with top-left corner at (0,0)
+//arranges them so that they occupy without intersection a 
+//minimal area with minimal wasted space.
+func Arrange(rects []image.Rectangle) {
 	if len(rects) == 0 {
 		return
 	}
+	
+	var arranged RectPtrSlice = make([]*image.Rectangle, len(rects))
 
 	//Populating the result set with the input rectangels and sorting them by size.
-	copy(packed, rects)
-	sort.Sort(packed)
+	for i := 0; i < len(arranged); i++ {
+		arranged[i] = &rects[i]
+	}
+	sort.Sort(arranged)
 
 	//Feasible placements of any rectange around another rectangle.
 	placements := make([]image.Rectangle, 8)
 
-	for i := 1; i < len(packed); i++ {
+	totalAreaOfArranged := area(*arranged[0])
+	union := *arranged[0]
+
+	for i := 1; i < len(arranged); i++ {
 		minRate := math.MaxFloat64
 		var bestPlacement image.Rectangle
 
 		for j := 0; j < i; j++ {
-			makePlacements(packed[j], packed[i], placements)
+			makePlacements(*arranged[j], *arranged[i], placements)
 
 			//Searching for a best placement among feasible.
 			for k := 0; k < len(placements); k++ {
-				if intersectsAny(placements[k], packed, i) {
+				if intersectsAny(placements[k], arranged, i) {
 					continue
 				}
 
-				if newRate := rateOf(placements[k], packed, i); newRate < minRate {
+				if newRate := rateOf(placements[k], union, totalAreaOfArranged); newRate < minRate {
 					minRate = newRate
 					bestPlacement = placements[k]
 				}
 			}
 
-			packed[i] = bestPlacement
+			*arranged[i] = bestPlacement
 		}
+		
+		totalAreaOfArranged += area(*arranged[i])
+		union = union.Union(*arranged[i])
 	}
 
-	return
+	//Aligning the rectangles.
+	for i := 0; i < len(rects); i++ {
+		dx := rects[i].Dx()
+		dy := rects[i].Dy()
+	
+		rects[i].Min.X = rects[i].Min.X - union.Min.X
+		rects[i].Min.Y = rects[i].Min.Y - union.Min.Y
+		rects[i].Max.X = rects[i].Min.X + dx 
+		rects[i].Max.Y = rects[i].Min.Y + dy 
+	}
 }

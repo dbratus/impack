@@ -3,6 +3,7 @@ package impack
 import (
 	"image"
 	"testing"
+	"rand"
 )
 
 func TestArea(t *testing.T) {
@@ -25,13 +26,13 @@ func TestAspectRatio(t *testing.T) {
 }
 
 func TestIntersectAny(t *testing.T) {
-	rectsInt := []image.Rectangle{
-		image.Rect(2, 1, 4, 3),
-		image.Rect(2, 4, 4, 6),
+	rectsInt := []*image.Rectangle{
+		&image.Rectangle{image.Point{2, 1}, image.Point{4, 3}},
+		&image.Rectangle{image.Point{2, 4}, image.Point{4, 6}},
 	}
-	rectsNoInt := []image.Rectangle{
-		image.Rect(5, 1, 7, 4),
-		image.Rect(5, 5, 7, 6),
+	rectsNoInt := []*image.Rectangle{
+		&image.Rectangle{image.Point{5, 1}, image.Point{7, 4}},
+		&image.Rectangle{image.Point{5, 5}, image.Point{7, 6}},
 	}
 	r := image.Rect(1, 2, 3, 5)
 
@@ -44,16 +45,21 @@ func TestIntersectAny(t *testing.T) {
 	}
 }
 
-func TestWastedArea(t *testing.T) {
-	rects := []image.Rectangle{
-		image.Rect(5, 1, 7, 4),
-		image.Rect(5, 5, 7, 6),
+func BenchmarkArrange(t *testing.B) {
+	rects := make([]image.Rectangle, 100)
+	
+	minSize := 1
+	maxSize := 100
+	
+	//Initializing random rectangles.
+	for i := 0; i < len(rects); i++ {
+		rects[i] = image.Rect(0, 0, minSize+int(rand.Float64()*float64(maxSize-minSize)), minSize+int(rand.Float64()*float64(maxSize-minSize)))
 	}
-	r := image.Rect(1, 2, 3, 5)
-	w := wastedArea(r, rects, len(rects))
-	mustBe := 16
-		
-	if w != mustBe {
-		t.Errorf("Wrong wasted area %d. Correct: %d", w, mustBe)
+
+	rectsWorking := make([]image.Rectangle, 100)
+
+	for i := 0; i < 100; i++ {
+		copy(rectsWorking, rects)
+		Arrange(rectsWorking)
 	}
 }
