@@ -14,16 +14,17 @@ func makePlacements(pivot, r image.Rectangle, out []image.Rectangle) {
 	out[3] = image.Rect(pivot.Min.X, pivot.Max.Y, pivot.Min.X+r.Dx(), pivot.Max.Y+r.Dy())
 	out[4] = image.Rect(pivot.Min.X-r.Dx(), pivot.Max.Y-r.Dy(), pivot.Min.X, pivot.Max.Y)
 	out[5] = image.Rect(pivot.Min.X-r.Dx(), pivot.Min.Y, pivot.Min.X, pivot.Min.Y+r.Dy())
-	out[6] = image.Rect(pivot.Min.X, pivot.Min.Y-pivot.Dy(), pivot.Min.X+r.Dx(), pivot.Min.Y)
+	out[6] = image.Rect(pivot.Min.X, pivot.Min.Y-r.Dy(), pivot.Min.X+r.Dx(), pivot.Min.Y)
 	out[7] = image.Rect(pivot.Max.X-r.Dx(), pivot.Min.Y-r.Dy(), pivot.Max.X, pivot.Min.Y)
 }
 
 //Given a set of rectangles with top-left corner at (0,0)
 //arranges them so that they occupy without intersection a 
 //minimal area with minimal wasted space.
-func Arrange(rects []image.Rectangle) {
+//Returns union of the arranged rectangles.
+func Arrange(rects []image.Rectangle) image.Rectangle {
 	if len(rects) == 0 {
-		return
+		return image.ZR
 	}
 	
 	var arranged RectPtrSlice = make([]*image.Rectangle, len(rects))
@@ -76,4 +77,8 @@ func Arrange(rects []image.Rectangle) {
 		rects[i].Max.X = rects[i].Min.X + dx 
 		rects[i].Max.Y = rects[i].Min.Y + dy 
 	}
+	
+	union = image.Rect(0, 0, union.Max.X - union.Min.X, union.Max.Y - union.Min.Y)
+	
+	return union
 }
