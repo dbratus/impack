@@ -11,11 +11,11 @@ func (s RectPtrSlice) Len() int {
 }
 
 func (s RectPtrSlice) Less(i, j int) bool {
-	return area(*s[i]) < area(*s[j])
+	return area(*s[i]) > area(*s[j])
 }
 
 func (s RectPtrSlice) Swap(i, j int) {
-	*s[i], *s[j] = *s[j], *s[i]
+	s[i], s[j] = s[j], s[i]
 }
 
 //Returns the total area of all rectangles.

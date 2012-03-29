@@ -50,17 +50,17 @@ func TestMakePlacements(t *testing.T) {
 	pivot := image.Rect(3, 3, 6, 6)
 	rect := image.Rect(0, 0, 2, 2)
 	out := make([]image.Rectangle, 8)
-	
+
 	makePlacements(pivot, rect, out)
-		
+
 	for i, r := range out {
 		t.Logf("%d: %s\n", i, r.String())
-		
+
 		if r.Dx() != 2 || r.Dy() != 2 {
 			t.Errorf("Size of a placement is invalid.")
 			t.Fail()
 		}
-		
+
 		if !pivot.Intersect(r).Empty() {
 			t.Errorf("Placement intersects the pivot.")
 			t.Fail()
@@ -70,41 +70,42 @@ func TestMakePlacements(t *testing.T) {
 
 func TestArrange(t *testing.T) {
 	rects := []image.Rectangle{
-		image.Rect(0, 0, 1, 3),
-		image.Rect(0, 0, 2, 6),
-		image.Rect(0, 0, 3, 9),
 		image.Rect(0, 0, 4, 12),
 		image.Rect(0, 0, 5, 15),
+		image.Rect(0, 0, 2, 6),
+		image.Rect(0, 0, 3, 9),
+		image.Rect(0, 0, 1, 3),
 	}
+	areas := []int{4 * 12, 5 * 15, 2 * 6, 3 * 9, 1 * 3}
 
 	union := Arrange(rects)
 
 	str := ""
-	
+
 	for i := 0; i < union.Max.X; i++ {
 		for j := 0; j < union.Max.Y; j++ {
 			found := false
-			
+
 			for k := 0; k < len(rects); k++ {
-				if !image.Rect(i, j, i + 1, j + 1).Intersect(rects[k]).Empty() {
+				if !image.Rect(i, j, i+1, j+1).Intersect(rects[k]).Empty() {
 					str += strconv.Itoa(k)
 					found = true
 					break
 				}
 			}
-			
-			if !found { 
+
+			if !found {
 				str += "X"
 			}
 		}
-		
+
 		str += "\n"
-	} 
+	}
 
 	t.Log(str)
-	
+
 	for i, r := range rects {
-		if r.Dx() != i + 1 || r.Dy() != (i + 1) * 3 {
+		if area(r) != areas[i] {
 			t.Errorf("Size of a placement is invalid.")
 			t.Fail()
 		}
