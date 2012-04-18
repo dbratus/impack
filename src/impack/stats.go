@@ -2,7 +2,7 @@ package impack
 
 import (
 	"image"
-	"rand"
+	"math/rand"
 )
 
 func unionOfRects(rects []image.Rectangle) image.Rectangle {

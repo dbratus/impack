@@ -2,6 +2,7 @@ package main
 
 import (
 	"impack"
+	"impack/loading"
 	"fmt"
 	"os"
 	"image"
@@ -9,6 +10,7 @@ import (
 	"image/png"
 	"flag"
 	"io"
+	"archive/zip"
 )
 
 var archiveFileName *string = flag.String("a", "", "Archive file name.")
@@ -21,12 +23,13 @@ func main() {
 	var images []image.Image
 	
 	if len(*archiveFileName) == 0 {
-		var err os.Error
 		var pathChan chan string
 		
 		if len(*imageDirName) > 0 {
-			if pathChan, err = getImagePaths(*imageDirName); err != nil {
-				fmt.Errorf("%s\n", err)
+			if pch, err := getImagePaths(*imageDirName); err == nil {
+				pathChan = pch
+			} else {
+				fmt.Errorf("%s\n", err.Error())
 				return
 			}
 		} else {
@@ -41,9 +44,19 @@ func main() {
 			}()
 		}
 		
-		images = loadImages(pathChan)
+		images = loading.LoadImages(pathChan)
 	} else {
-		images = loadImagesFromZip(*archiveFileName)
+		var reader *zip.ReadCloser
+
+		if r, err := zip.OpenReader(*archiveFileName); err == nil {
+			reader = r
+		} else {
+			fmt.Printf("%s\n", err)
+			return
+		}
+		
+		images = loading.LoadImagesFromZip(&reader.Reader)
+		reader.Close()
 	}
 
 	rects := make([]image.Rectangle, len(images))
@@ -54,7 +67,7 @@ func main() {
 	
 	union := impack.Arrange(rects)
 	
-	dest := image.NewNRGBA(union.Dx(), union.Dy())
+	dest := image.NewNRGBA(image.Rect(0, 0, union.Dx(), union.Dy()))
 	
 	for i := 0; i < len(rects); i++ {
 		draw.Draw(dest, rects[i], images[i], image.Pt(0, 0), draw.Src)

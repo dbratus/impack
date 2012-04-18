@@ -1,4 +1,4 @@
-package main
+package loading
 
 import (
 	"image"
@@ -19,7 +19,7 @@ type loaderRequest struct {
 	reader io.ReadCloser
 }
 
-func loadImages(pathChan chan string) []image.Image {
+func LoadImages(pathChan chan string) []image.Image {
 	loadingIn := make(chan loaderRequest, nParallelLoaders)
 	loadingOut := make(chan image.Image, nParallelLoaders)
 	stopChan := make(chan int)
@@ -59,17 +59,7 @@ func loadImages(pathChan chan string) []image.Image {
 	return images
 }
 
-func loadImagesFromZip(archPath string) []image.Image {
-	var reader *zip.ReadCloser
-
-	if r, err := zip.OpenReader(archPath); err == nil {
-		reader = r
-		defer reader.Close()
-	} else {
-		fmt.Printf("%s\n", err)
-		return make([]image.Image, 0)
-	}
-
+func LoadImagesFromZip(reader *zip.Reader) []image.Image {
 	loadingIn := make(chan loaderRequest, nParallelLoaders)
 	loadingOut := make(chan image.Image, nParallelLoaders)
 	stopChan := make(chan int)
