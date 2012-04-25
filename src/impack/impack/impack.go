@@ -20,7 +20,7 @@ var outputFileName *string = flag.String("o", "", "Output file name.")
 func main() {
 	flag.Parse()
 
-	var images []image.Image
+	var images []loading.Image
 	
 	if len(*archiveFileName) == 0 {
 		var pathChan chan string
@@ -62,7 +62,7 @@ func main() {
 	rects := make([]image.Rectangle, len(images))
 	
 	for i := 0; i < len(rects); i++ {
-		rects[i] = images[i].Bounds()
+		rects[i] = images[i].Data.Bounds()
 	}
 	
 	union := impack.Arrange(rects)
@@ -70,7 +70,7 @@ func main() {
 	dest := image.NewNRGBA(image.Rect(0, 0, union.Dx(), union.Dy()))
 	
 	for i := 0; i < len(rects); i++ {
-		draw.Draw(dest, rects[i], images[i], image.Pt(0, 0), draw.Src)
+		draw.Draw(dest, rects[i], images[i].Data, image.Pt(0, 0), draw.Src)
 	}
 	
 	var out io.Writer

@@ -1,0 +1,31 @@
+<html>
+	<head>
+		<link type="text/css" rel="stylesheet" href="/blob/{{.Sprite.CssId}}">
+		<style type="text/css">
+			.img {
+				display: block;
+				float: left;
+				margin-top: 10px;
+				margin-right: 10px;
+			}
+			
+			.galery {
+				width: 600px;
+				margin-left: auto;
+				margin-right: auto;
+			}
+		</style>
+	</head>
+	<body>
+		<div>
+			<img src="/blob/{{.Sprite.ImageId}}" alt="Sprite"><br>
+			<a href="/blob/{{.Sprite.CssId}}">CSS</a>
+		</div>
+		<div class="galery">
+			{{$imgId := .Sprite.ImageId}}
+			{{range .Classes}}
+				<div class="{{.}} img"></div>
+			{{end}}
+		</div>
+	</body>
+</html>
