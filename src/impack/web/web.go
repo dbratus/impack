@@ -33,15 +33,10 @@ func init() {
 	http.HandleFunc("/", index)
 	http.HandleFunc("/upload", upload)
 	http.HandleFunc("/blob/", blob)
-	http.HandleFunc("/js/", static)
 }
 
 func index(resp http.ResponseWriter, req *http.Request) {
 	http.ServeFile(resp, req, "index.html")
-}
-
-func static(resp http.ResponseWriter, req *http.Request) {
-	http.ServeFile(resp, req, req.URL.Path)
 }
 
 func blob(resp http.ResponseWriter, req *http.Request) {

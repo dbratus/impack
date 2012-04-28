@@ -1,6 +1,7 @@
 <html>
 	<head>
 		<link type="text/css" rel="stylesheet" href="/blob/{{.Sprite.CssId}}">
+		<link type="text/css" rel="stylesheet" href="/static/styles.css">
 		<style type="text/css">
 			.img {
 				display: block;
@@ -9,19 +10,32 @@
 				margin-right: 10px;
 			}
 			
+			.attention {
+				background-color: red;
+				color: white;
+				font-weight: bold;
+			}
+			
+			.header {
+				margin-left: 35px;
+			}
+			
 			.galery {
-				width: 600px;
-				margin-left: auto;
-				margin-right: auto;
+				width: 400px;
+				margin-left: 35px;
 			}
 		</style>
 	</head>
 	<body>
-		<div>
+		<div class="header">
+			<img src="/static/logo.png" alt="Logo">
+			<p>This is your sprite and the <a href="/blob/{{.Sprite.CssId}}">CSS</a> with the coordinates of the images.</p>
+			<p><span class="attention">The links will expire in one minute.</span></p>
 			<img src="/blob/{{.Sprite.ImageId}}" alt="Sprite"><br>
-			<a href="/blob/{{.Sprite.CssId}}">CSS</a>
 		</div>
 		<div class="galery">
+			<p>Your images:</p>
+			
 			{{$imgId := .Sprite.ImageId}}
 			{{range .Classes}}
 				<div class="{{.}} img"></div>
