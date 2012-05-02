@@ -4,9 +4,17 @@ runtime: go
 api_version: go1
 
 handlers:
+- url: /cut
+  script: _go_app
+  login: admin
+  
 - url: /static/(.*)
   static_files: static/\1
   upload: static/(.*)  
+
+- url: /favicon.ico
+  static_files: favicon.ico
+  upload: favicon.ico
 
 - url: /.*
   script: _go_app

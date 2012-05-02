@@ -1,0 +1,4 @@
+cron:
+- description: cleanup
+  url: /cut
+  schedule: every 1 minutes 

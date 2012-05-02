@@ -32,6 +32,7 @@ type SpriteView struct {
 func init() {
 	http.HandleFunc("/", index)
 	http.HandleFunc("/upload", upload)
+	http.HandleFunc("/cut", cut)
 	http.HandleFunc("/blob/", blob)
 }
 
@@ -114,7 +115,7 @@ func upload(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if _, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "spriteInfo", nil), spriteInfo); err != nil {
+	if _, err := datastore.Put(ctx, datastore.NewIncompleteKey(ctx, "SpriteInfo", nil), spriteInfo); err != nil {
 		ctx.Errorf("%s", err.Error())
 		http.Error(resp, "Server error", http.StatusInternalServerError)
 		return
@@ -138,4 +139,40 @@ func upload(resp http.ResponseWriter, req *http.Request) {
 		http.Error(resp, "Server error", http.StatusInternalServerError)
 		return
 	}
+}
+
+func cut(resp http.ResponseWriter, req *http.Request) {
+	ctx := appengine.NewContext(req)
+
+	minuteBack, _ := time.ParseDuration("-1m")
+	cutPoint := time.Now().Add(minuteBack)
+	
+	q := datastore.NewQuery("SpriteInfo").
+		Filter("Timestamp <", cutPoint)
+	
+	itr := q.Run(ctx)
+
+	var spriteInfo SpriteInfo
+	
+	cnt := 0
+	var k *datastore.Key
+	var itrErr error
+	
+	for k, itrErr = itr.Next(&spriteInfo); itrErr == nil; k, itrErr = itr.Next(&spriteInfo) {
+		if err := blobstore.Delete(ctx, spriteInfo.CssId); err != nil {
+			ctx.Errorf("Error deleting CSS %s %s.", spriteInfo.CssId, err)
+		}
+		
+		if err := blobstore.Delete(ctx, spriteInfo.ImageId); err != nil {
+			ctx.Errorf("Error deleting image %s %s.", spriteInfo.ImageId, err)
+		}
+		
+		if err := datastore.Delete(ctx, k); err != nil {
+			ctx.Errorf("Error deleting sprite %s %s.", k, err)
+		}
+		
+		cnt++
+	}
+	
+	ctx.Infof("Cut stoped with result %v. %d sprites deleted", itrErr, cnt)
 }
