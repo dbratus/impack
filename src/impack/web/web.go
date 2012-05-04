@@ -27,6 +27,7 @@ type SpriteInfo struct {
 type SpriteView struct {
 	Sprite  SpriteInfo
 	Classes []string
+	Errors  []loading.Error
 }
 
 func init() {
@@ -41,11 +42,7 @@ func index(resp http.ResponseWriter, req *http.Request) {
 }
 
 func blob(resp http.ResponseWriter, req *http.Request) {
-	ctx := appengine.NewContext(req)
-
 	_, id := path.Split(req.URL.Path)
-	ctx.Infof("BLOB Id %s parsed.", id)
-
 	blobstore.Send(resp, appengine.BlobKey(id))
 }
 
@@ -58,7 +55,7 @@ func upload(resp http.ResponseWriter, req *http.Request) {
 		arch = f
 	} else {
 		ctx.Errorf("%s", err.Error())
-		http.Error(resp, "Server error", http.StatusInternalServerError)
+		http.Error(resp, "No zip file has been submitted.", http.StatusInternalServerError)
 		return
 	}
 
@@ -73,12 +70,13 @@ func upload(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	var images []loading.Image
+	var loadingErrors []loading.Error
 
 	if r, err := zip.NewReader(arch, fileSize); err == nil {
-		images = loading.LoadImagesFromZip(r)
+		images, loadingErrors = loading.LoadImagesFromZip(r)
 	} else {
 		ctx.Errorf("%s", err.Error())
-		http.Error(resp, "Server error", http.StatusInternalServerError)
+		http.Error(resp, "The file submitted is not a valid zip archive.", http.StatusInternalServerError)
 		return
 	}
 
@@ -127,7 +125,7 @@ func upload(resp http.ResponseWriter, req *http.Request) {
 			classes[i] = fmt.Sprintf("cls%d", i+1)
 		}
 
-		spriteView := &SpriteView{Sprite: *spriteInfo, Classes: classes}
+		spriteView := &SpriteView{Sprite: *spriteInfo, Classes: classes, Errors: loadingErrors}
 
 		if err = t.Execute(resp, spriteView); err != nil {
 			ctx.Errorf("%s", err.Error())

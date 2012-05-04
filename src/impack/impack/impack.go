@@ -21,6 +21,7 @@ func main() {
 	flag.Parse()
 
 	var images []loading.Image
+	var loadingErrors []loading.Error
 	
 	if len(*archiveFileName) == 0 {
 		var pathChan chan string
@@ -44,7 +45,7 @@ func main() {
 			}()
 		}
 		
-		images = loading.LoadImages(pathChan)
+		images, loadingErrors = loading.LoadImages(pathChan)
 	} else {
 		var reader *zip.ReadCloser
 
@@ -55,8 +56,12 @@ func main() {
 			return
 		}
 		
-		images = loading.LoadImagesFromZip(&reader.Reader)
+		images, loadingErrors = loading.LoadImagesFromZip(&reader.Reader)
 		reader.Close()
+	}
+
+	for _, r := range loadingErrors {
+		fmt.Errorf("Loading of %s failed:\n  %s\n", r.Name, r.Message)
 	}
 
 	rects := make([]image.Rectangle, len(images))

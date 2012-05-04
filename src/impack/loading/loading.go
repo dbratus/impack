@@ -24,15 +24,22 @@ type Image struct {
 	Data image.Image
 }
 
-func LoadImages(pathChan chan string) []Image {
-	loadingIn := make(chan loaderRequest, nParallelLoaders)
-	loadingOut := make(chan *Image, nParallelLoaders)
+type Error struct {
+	Name    string
+	Message string
+}
+
+func LoadImages(pathChan chan string) ([]Image, []Error) {
+	inChan := make(chan loaderRequest, nParallelLoaders)
+	outChan := make(chan *Image, nParallelLoaders)
+	errChan := make(chan *Error, nParallelLoaders)
 	stopChan := make(chan int)
 
 	images := make([]Image, 0, 100)
+	errors := make([]Error, 0, 100)
 
 	for i := 0; i < nParallelLoaders; i++ {
-		go loader(loadingIn, loadingOut, stopChan)
+		go loader(inChan, outChan, errChan, stopChan)
 	}
 
 	cnt := 0
@@ -41,7 +48,7 @@ func LoadImages(pathChan chan string) []Image {
 
 		if !end {
 			if fl, err := os.Open(pth); err == nil {
-				loadingIn <- loaderRequest{pth, fl}
+				inChan <- loaderRequest{pth, fl}
 				cnt++
 			} else {
 				fmt.Errorf("%s\n", err)
@@ -49,7 +56,7 @@ func LoadImages(pathChan chan string) []Image {
 		}
 
 		if cnt == nParallelLoaders || end {
-			getImagesFromChan(loadingOut, &images, &cnt)
+			getImagesFromChan(outChan, errChan, &images, &errors, &cnt)
 
 			if end {
 				break
@@ -61,18 +68,21 @@ func LoadImages(pathChan chan string) []Image {
 		stopChan <- 1
 	}
 
-	return images
+	return images, errors
 }
 
-func LoadImagesFromZip(reader *zip.Reader) []Image {
-	loadingIn := make(chan loaderRequest, nParallelLoaders)
-	loadingOut := make(chan *Image, nParallelLoaders)
+func LoadImagesFromZip(reader *zip.Reader) ([]Image, []Error) {
+	inChan := make(chan loaderRequest, nParallelLoaders)
+	outChan := make(chan *Image, nParallelLoaders)
+	errChan := make(chan *Error, nParallelLoaders)
+	
 	stopChan := make(chan int)
 
 	images := make([]Image, 0, 100)
+	errors := make([]Error, 0, 100)
 
 	for i := 0; i < nParallelLoaders; i++ {
-		go loader(loadingIn, loadingOut, stopChan)
+		go loader(inChan, outChan, errChan, stopChan)
 	}
 
 	cnt := 0
@@ -89,7 +99,7 @@ func LoadImagesFromZip(reader *zip.Reader) []Image {
 
 		if !strings.HasPrefix(f.Name, "__MACOSX") && (isPng || isJpg) {
 			if r, err := f.Open(); err == nil {
-				loadingIn <- loaderRequest{f.Name, r}
+				inChan <- loaderRequest{f.Name, r}
 				cnt++
 			} else {
 				fmt.Printf("%s\n", err)
@@ -97,48 +107,49 @@ func LoadImagesFromZip(reader *zip.Reader) []Image {
 		}
 
 		if cnt == nParallelLoaders {
-			getImagesFromChan(loadingOut, &images, &cnt)
+			getImagesFromChan(outChan, errChan, &images, &errors, &cnt)
 		}
 	}
 
-	getImagesFromChan(loadingOut, &images, &cnt)
+	getImagesFromChan(outChan, errChan, &images, &errors, &cnt)
 
-	return images
+	return images, errors
 }
 
-func getImagesFromChan(loadingOut chan *Image, images *[]Image, cnt *int) {
+func getImagesFromChan(outChan chan *Image, errChan chan *Error, images *[]Image, errors *[]Error, cnt *int) {
 	for ; *cnt > 0; *cnt-- {
-		if img := <-loadingOut; img != nil {
+		select {
+		case img := <- outChan:
 			*images = append(*images, *img)
+		case err := <- errChan:
+			*errors = append(*errors, *err)
 		}
 	}
 }
 
-func loader(in chan loaderRequest, out chan *Image, stop chan int) {
+func loader(inChan chan loaderRequest, outChan chan *Image, errChan chan *Error, stopChan chan int) {
 	for {
 		select {
-		case req := <-in:
+		case req := <-inChan:
 			switch strings.ToLower(path.Ext(req.name)) {
 			case ".jpg":
 				if img, err := jpeg.Decode(req.reader); err == nil {
-					out <- &Image{ Name: req.name, Data: img }
+					outChan <- &Image{Name: req.name, Data: img}
 				} else {
-					fmt.Errorf("%s\n", err)
-					out <- nil
+					errChan <- &Error{Name: req.name, Message: err.Error() }
 				}
 			case ".png":
 				if img, err := png.Decode(req.reader); err == nil {
-					out <- &Image{ Name: req.name, Data: img }
+					outChan <- &Image{Name: req.name, Data: img}
 				} else {
-					fmt.Errorf("%s\n", err)
-					out <- nil
+					errChan <- &Error{Name: req.name, Message: err.Error() }
 				}
 			}
 
 			if err := req.reader.Close(); err != nil {
 				fmt.Errorf("%s\n", err)
 			}
-		case <-stop:
+		case <-stopChan:
 			return
 		}
 	}

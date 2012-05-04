@@ -24,13 +24,27 @@
 				width: 400px;
 				margin-left: 35px;
 			}
+			
+			.error {
+				color: red;
+			}
 		</style>
 	</head>
 	<body>
 		<div class="header">
 			<a href="/"><img src="/static/logo.png" alt="Logo"></a>
-			<p>This is your sprite and the <a href="/blob/{{.Sprite.CssId}}">CSS</a> with the coordinates of the images.</p>
-			<p><span class="attention">The links will expire in one minute.</span></p>
+			<p>
+				This is your sprite and the <a href="/blob/{{.Sprite.CssId}}">CSS</a> 
+				with the coordinates of the images. 
+				<b>The links will expire in one minute.</b>
+			</p>
+			{{if .Errors}}
+			<p class="error">Failed to load the following images:<br>
+			{{range .Errors}}
+				'{{.Name}}': {{.Message}}<br>
+			{{end}} 
+			</p>
+			{{end}}
 			<img src="/blob/{{.Sprite.ImageId}}" alt="Sprite"><br>
 		</div>
 		<div class="galery">
