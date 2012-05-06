@@ -1,0 +1,11 @@
+ImPack - one more CSS sprites maker
+
+To build the command line utility:
+
+1. Fetch the repository.
+2. Add the path to the local repository to your GOPATH.
+3. Type `go install impack/impack` (of course you need Go to be installed).
+
+For more information on installing Go visit: http://golang.org/doc/install
+For more information on how to build Go programs visit: http://golang.org/doc/articles/go_command.html
+The on-line version of ImPack is available here: http://im-pack.appspot.com

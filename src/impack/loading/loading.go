@@ -1,3 +1,18 @@
+// ImPack - CSS sprites maker
+// Copyright (C) 2012 Dmitry Bratus
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <http://www.gnu.org/licenses/>.
 package loading
 
 import (
@@ -75,7 +90,7 @@ func LoadImagesFromZip(reader *zip.Reader) ([]Image, []Error) {
 	inChan := make(chan loaderRequest, nParallelLoaders)
 	outChan := make(chan *Image, nParallelLoaders)
 	errChan := make(chan *Error, nParallelLoaders)
-	
+
 	stopChan := make(chan int)
 
 	images := make([]Image, 0, 100)
@@ -119,9 +134,9 @@ func LoadImagesFromZip(reader *zip.Reader) ([]Image, []Error) {
 func getImagesFromChan(outChan chan *Image, errChan chan *Error, images *[]Image, errors *[]Error, cnt *int) {
 	for ; *cnt > 0; *cnt-- {
 		select {
-		case img := <- outChan:
+		case img := <-outChan:
 			*images = append(*images, *img)
-		case err := <- errChan:
+		case err := <-errChan:
 			*errors = append(*errors, *err)
 		}
 	}
@@ -136,13 +151,13 @@ func loader(inChan chan loaderRequest, outChan chan *Image, errChan chan *Error,
 				if img, err := jpeg.Decode(req.reader); err == nil {
 					outChan <- &Image{Name: req.name, Data: img}
 				} else {
-					errChan <- &Error{Name: req.name, Message: err.Error() }
+					errChan <- &Error{Name: req.name, Message: err.Error()}
 				}
 			case ".png":
 				if img, err := png.Decode(req.reader); err == nil {
 					outChan <- &Image{Name: req.name, Data: img}
 				} else {
-					errChan <- &Error{Name: req.name, Message: err.Error() }
+					errChan <- &Error{Name: req.name, Message: err.Error()}
 				}
 			}
 

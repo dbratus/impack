@@ -1,3 +1,18 @@
+// ImPack - CSS sprites maker
+// Copyright (C) 2012 Dmitry Bratus
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <http://www.gnu.org/licenses/>.
 package impack
 
 import (
@@ -21,7 +36,7 @@ func makePlacements(pivot, r image.Rectangle, out []image.Rectangle) {
 //Given a set of rectangles with top-left corner at (0,0)
 //arranges them so that they occupy without intersection a 
 //minimal area with minimal wasted space.
-//Returns union of the arranged rectangles.
+//Returns the union of the arranged rectangles.
 func Arrange(rects []image.Rectangle) image.Rectangle {
 	if len(rects) == 0 {
 		return image.ZR
