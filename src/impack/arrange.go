@@ -74,9 +74,9 @@ func Arrange(rects []image.Rectangle) image.Rectangle {
 					bestPlacement = placements[k]
 				}
 			}
-
-			*arranged[i] = bestPlacement
 		}
+		
+		*arranged[i] = bestPlacement
 		
 		totalAreaOfArranged += area(*arranged[i])
 		union = union.Union(*arranged[i])
